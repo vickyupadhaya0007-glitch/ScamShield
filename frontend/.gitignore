@@ -1,0 +1,14 @@
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+/src/main/resources/application.properties
+application-local.properties
+
+# Java build output
+target/
+
+# Frontend dependencies and build output
+/frontend/node_modules/
+/frontend/dist/
