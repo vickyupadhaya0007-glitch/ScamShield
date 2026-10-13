@@ -2,6 +2,11 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 
+// Uses Railway when deployed, localhost when running locally.
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  "http://localhost:8080";
+
 function App() {
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -20,7 +25,7 @@ function App() {
     setReportsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/reports");
+      const response = await fetch(`${API_BASE_URL}/api/reports`);
 
       if (!response.ok) {
         throw new Error("Could not load reports.");
@@ -35,7 +40,6 @@ function App() {
     }
   }
 
-  // Load reports when the page opens
   useEffect(() => {
     fetchReports();
   }, []);
@@ -55,7 +59,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/check-url?url=${encodeURIComponent(url)}`
+        `${API_BASE_URL}/api/check-url?url=${encodeURIComponent(url)}`
       );
 
       if (!response.ok) {
@@ -65,8 +69,9 @@ function App() {
       const data = await response.json();
       setResult(data);
     } catch (err) {
+      console.error("Error checking URL:", err);
       setError(
-        "Could not connect to ScamShield. Make sure your Java backend is running."
+        "Could not connect to ScamShield. Please try again later."
       );
     } finally {
       setLoading(false);
@@ -88,7 +93,7 @@ function App() {
     setReportLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/reports", {
+      const response = await fetch(`${API_BASE_URL}/api/reports`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -107,12 +112,11 @@ function App() {
       setReportUrl("");
       setDescription("");
 
-      // Refresh community reports after submission
       await fetchReports();
     } catch (err) {
       console.error("Error submitting report:", err);
       setReportMessage(
-        "Could not submit the report. Check your backend and try again."
+        "Could not submit the report. Please try again later."
       );
     } finally {
       setReportLoading(false);
@@ -152,7 +156,6 @@ function App() {
 
             <div className="input-row">
               <span className="link-icon">↗</span>
-
               <input
                 id="url-input"
                 type="text"
@@ -218,18 +221,20 @@ function App() {
               <h3>What we found</h3>
 
               <ul className="warnings">
-                {(Array.isArray(result.warnings) && result.warnings.length > 0
-                  ? result.warnings
-                  : ["No warning details were returned."]
+                {(
+                  Array.isArray(result.warnings) &&
+                  result.warnings.length > 0
+                    ? result.warnings
+                    : ["No warning details were returned."]
                 ).map((warning, index) => (
                   <li key={index}>{warning}</li>
                 ))}
               </ul>
 
               <p className="disclaimer">
-                This is a basic rule-based assessment, not a guarantee that
-                a website is safe or malicious. Be cautious with unfamiliar
-                links.
+                This is a basic rule-based assessment, not a guarantee
+                that a website is safe or malicious. Be cautious with
+                unfamiliar links.
               </p>
             </section>
           )}
@@ -257,7 +262,6 @@ function App() {
                 <span className="community-label">
                   COMMUNITY REPORTED
                 </span>
-
                 <h3 className="community-url">{report.url}</h3>
                 <p>{report.description}</p>
               </article>
@@ -277,7 +281,9 @@ function App() {
           </div>
 
           <form className="report-form" onSubmit={submitReport}>
-            <label htmlFor="report-url">Suspicious website URL</label>
+            <label htmlFor="report-url">
+              Suspicious website URL
+            </label>
 
             <input
               id="report-url"
@@ -302,7 +308,9 @@ function App() {
             />
 
             <button type="submit" disabled={reportLoading}>
-              {reportLoading ? "Submitting..." : "Submit Scam Report →"}
+              {reportLoading
+                ? "Submitting..."
+                : "Submit Scam Report →"}
             </button>
 
             {reportMessage && (
@@ -364,4 +372,3 @@ function App() {
 }
 
 export default App;
-
