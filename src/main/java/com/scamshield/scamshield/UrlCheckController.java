@@ -11,7 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {
+    "http://localhost:5173",
+    "https://scamshield-frontend-ncv0.onrender.com"
+})
 @RestController
 public class UrlCheckController {
 
@@ -25,7 +28,8 @@ public class UrlCheckController {
 
         if (value.isEmpty()) {
             return new UrlResult(
-                "INVALID", 0, List.of("Please enter a URL.")
+                "INVALID", 0,
+                List.of("Please enter a URL.")
             );
         }
 
@@ -52,22 +56,53 @@ public class UrlCheckController {
             if (host.startsWith("xn--")
                     || host.contains(".xn--")) {
                 score += 25;
-                warnings.add("Domain contains encoded international characters.");
+                warnings.add(
+                    "Domain contains encoded international characters."
+                );
             }
 
             if (host.matches("\\d{1,3}(\\.\\d{1,3}){3}")) {
                 score += 25;
-                warnings.add("URL uses an IP address instead of a domain name.");
+                warnings.add(
+                    "URL uses an IP address instead of a domain name."
+                );
             }
 
             if (host.split("\\.").length >= 5) {
                 score += 15;
-                warnings.add("Domain contains many subdomains.");
+                warnings.add(
+                    "Domain contains many subdomains."
+                );
             }
 
             if (value.contains("@")) {
                 score += 20;
-                warnings.add("URL contains an @ symbol that may confuse users.");
+                warnings.add(
+                    "URL contains an @ symbol that may confuse users."
+                );
+            }
+
+            // Check for common URL-shortening services.
+            String[] shorteners = {
+                "bit.ly",
+                "tinyurl.com",
+                "t.co",
+                "is.gd",
+                "cutt.ly",
+                "rb.gy",
+                "shorturl.at",
+                "rebrand.ly"
+            };
+
+            for (String shortener : shorteners) {
+                if (host.equals(shortener)
+                        || host.endsWith("." + shortener)) {
+                    score += 25;
+                    warnings.add(
+                        "This URL uses a shortened link, which hides the final destination."
+                    );
+                    break;
+                }
             }
 
             String[] suspiciousWords = {
@@ -78,7 +113,9 @@ public class UrlCheckController {
             for (String word : suspiciousWords) {
                 if (host.contains(word)) {
                     score += 10;
-                    warnings.add("Domain contains a potentially suspicious word: " + word);
+                    warnings.add(
+                        "Domain contains a potentially suspicious word: " + word
+                    );
                 }
             }
 
@@ -92,6 +129,7 @@ public class UrlCheckController {
         score = Math.min(score, 100);
 
         String riskLevel;
+
         if (score >= 50) {
             riskLevel = "HIGH";
         } else if (score >= 20) {
@@ -101,7 +139,9 @@ public class UrlCheckController {
         }
 
         if (warnings.isEmpty()) {
-            warnings.add("No suspicious patterns were detected by these basic rules.");
+            warnings.add(
+                "No suspicious patterns were detected by these basic rules."
+            );
         }
 
         return new UrlResult(riskLevel, score, warnings);
